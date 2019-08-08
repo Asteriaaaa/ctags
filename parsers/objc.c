@@ -87,7 +87,7 @@ typedef enum {
 
 	Tok_COMA,	/* ',' */
 	Tok_PLUS,	/* '+' */
-	Tok_MINUS,	/* '-' */
+	Tok_MINUS,	/* '-' */ //26
 	Tok_PARL,	/* '(' */
 	Tok_PARR,	/* ')' */
 	Tok_CurlL,	/* '{' */
@@ -101,7 +101,7 @@ typedef enum {
 	Tok_Asterisk,	/* '*' */
 	Tok_ANGLEL,		/* '<' */
 	Tok_ANGLER,		/* '>' */
-	Tok_EOL,	/* '\r''\n' */
+	Tok_EOL,	/* '\r''\n' */ //40
 	Tok_CSTRING,	/* "..." */
 	Tok_any,
 
@@ -525,12 +525,14 @@ static objcToken waitedToken, fallBackToken;
  * why though. */
 static void tillToken (vString * const ident CTAGS_ATTR_UNUSED, objcToken what)
 {
+	printf ("till token %d\n", what);
 	if (what == waitedToken)
 		toDoNext = comeAfter;
 }
 
 static void tillTokenOrFallBack (vString * const ident CTAGS_ATTR_UNUSED, objcToken what)
 {
+	printf ("till token or fallback %d\n", what);
 	if (what == waitedToken)
 		toDoNext = comeAfter;
 	else if (what == fallBackToken)
@@ -542,7 +544,7 @@ static void tillTokenOrFallBack (vString * const ident CTAGS_ATTR_UNUSED, objcTo
 static int ignoreBalanced_count = 0;
 static void ignoreBalanced (vString * const ident CTAGS_ATTR_UNUSED, objcToken what)
 {
-
+	printf ("ignoreBalanced %d\n", what);
 	switch (what)
 	{
 	case Tok_PARL:
@@ -609,6 +611,7 @@ static vString *signature;
 
 static void tillTokenWithCapturingSignature (vString * const ident, objcToken what)
 {
+	printf("tillTokenWithCapturingSignature %d\n", what);
 	tillToken (ident, what);
 
 	if (what != waitedToken)
@@ -632,7 +635,7 @@ static void parseMethodsNameCommon (vString * const ident, objcToken what,
 									parseNext nextAction)
 {
 	unsigned int index;
-
+	printf(" parseMethodsNameCommon %d\n");
 	switch (what)
 	{
 	case Tok_PARL:
@@ -757,6 +760,7 @@ static void parseCategory (vString * const ident, objcToken what)
 
 static void parseImplemMethods (vString * const ident, objcToken what)
 {
+	printf("parseImplemMethods %d\n", what);
 	switch (what)
 	{
 	case Tok_PLUS:	/* + */
@@ -868,6 +872,7 @@ static void parseInterfaceProtocolList (vString * const ident, objcToken what)
 
 static void parseMethods (vString * const ident CTAGS_ATTR_UNUSED, objcToken what)
 {
+	printf("parseMethods %d", what);
 	switch (what)
 	{
 	case Tok_PLUS:	/* + */
@@ -1210,6 +1215,7 @@ static void parseCPlusPlusCLinkage (vString * const ident, objcToken what)
  * happen here */
 static void globalScope (vString * const ident, objcToken what)
 {
+	printf("globalScope %d\n", what);
 	switch (what)
 	{
 	case Tok_Sharp:
