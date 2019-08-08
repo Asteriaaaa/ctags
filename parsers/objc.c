@@ -568,6 +568,8 @@ static void ignoreBalanced (vString * const ident CTAGS_ATTR_UNUSED, objcToken w
 
 static void parseFields (vString * const ident, objcToken what)
 {
+	printf("parsefields");
+	printf("%s ", what);
 	switch (what)
 	{
 	case Tok_CurlR:
@@ -595,6 +597,7 @@ static void parseFields (vString * const ident, objcToken what)
 		/* NOTHING */
 		break;
 	}
+	printf("parsefields over\n\n");
 }
 
 static objcKind methodKind;
