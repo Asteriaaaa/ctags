@@ -303,30 +303,36 @@ static int left_square = 0;
 static bool isMethodCall = false;
 static objcKeyword parseMethodCall(lexingState * st){
 	unsigned char * tmp = st->cp;
-	while (*st->cp == ' ') st->cp++; //Strip spaces at the start of call
-	while (*st->cp != '\n'){
-		char now = *st->cp;
-		if (now == '['){
+	while (*st->cp == ' ' ){ st->cp++;} //Strip spaces at the start of call
+	while (*st->cp != '\n' && *st->cp != '\0'){
+		if (*st->cp == '['){
 			left_square++;
+			st->cp++;
 			continue;
 		}
-		if (now == ']'){
+		if (*st->cp == ']'){
 			left_square--;
+			st->cp++;
 			if (left_square <= 0){
 				printf("The method call parse: %s\n", buffer);
+				isMethodCall = false;
 				return Tok_SQUARER;
 			}
 			buffer[bufferIndex] = ' ';
 			bufferIndex++;
 			continue;
 		}
-		while (isAlpha(now) || isSpace(now)){
-			buffer[bufferIndex] = now;
+		while (isAlpha(*st->cp) || isSpace(*st->cp)|| *st->cp==':'|| *st->cp == '_' || isNum(*st->cp)){
+			buffer[bufferIndex] = *st->cp;
 			bufferIndex++;
+			st->cp++;
+			continue;
 		}
+		if (!(*st->cp != '\n' && *st->cp != '\0'))
+		st->cp++;
 	}
-
-	return Tok_EOL;
+	st->cp = tmp;
+	return Tok_SQUAREL;
 }
 
 /* The lexer is in charge of reading the file.
