@@ -297,6 +297,37 @@ static void readIdentifierObjcDirective (lexingState * st)
 
 	st->cp = p;
 }
+static char buffer[1024];
+static int bufferIndex = 0;
+static int left_square = 0;
+static bool isMethodCall = false;
+static objcKeyword parseMethodCall(lexingState * st){
+	unsigned char * tmp = st->cp;
+	while (*st->cp == ' ') st->cp++; //Strip spaces at the start of call
+	while (*st->cp != '\n'){
+		char now = *st->cp;
+		if (now == '['){
+			left_square++;
+			continue;
+		}
+		if (now == ']'){
+			left_square--;
+			if (left_square <= 0){
+				printf("The method call parse: %s\n", buffer);
+				return Tok_SQUARER;
+			}
+			buffer[bufferIndex] = ' ';
+			bufferIndex++;
+			continue;
+		}
+		while (isAlpha(now) || isSpace(now)){
+			buffer[bufferIndex] = now;
+			bufferIndex++;
+		}
+	}
+
+	return Tok_EOL;
+}
 
 /* The lexer is in charge of reading the file.
  * Some of sub-lexer (like eatComment) also read file.
@@ -304,7 +335,10 @@ static void readIdentifierObjcDirective (lexingState * st)
 static objcKeyword lex (lexingState * st)
 {
 	int retType;
-	printf("lexing\n %s\n", st->name->buffer);
+	printf("lexing\n %s\n", st->cp);
+	if (isMethodCall){
+		return parseMethodCall(st);
+	}
 	/* handling data input here */
 	while (st->cp == NULL || st->cp[0] == '\0')
 	{
@@ -392,9 +426,15 @@ static objcKeyword lex (lexingState * st)
 			return Tok_CurlR;
 		case '[':
 			st->cp++;
-			return Tok_SQUAREL;
+			isMethodCall = true;
+			left_square++;
+			return parseMethodCall(st);
+			//return Tok_SQUAREL;
 		case ']':
 			st->cp++;
+			left_square--;
+			if (left_square <= 0)
+				isMethodCall = false;
 			return Tok_SQUARER;
 		case ',':
 			st->cp++;
