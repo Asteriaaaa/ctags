@@ -304,7 +304,7 @@ static void readIdentifierObjcDirective (lexingState * st)
 static objcKeyword lex (lexingState * st)
 {
 	int retType;
-
+	printf("lexing\n %s\n", st->name->buffer);
 	/* handling data input here */
 	while (st->cp == NULL || st->cp[0] == '\0')
 	{
