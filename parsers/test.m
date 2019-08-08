@@ -9,6 +9,8 @@
 - (void) method2{
     NSLog(@"");
     [[Interface sharedInstance] someMethods];
+
+    [[Interface23 shrare] isAbdc:T ob:M bcd:456];
 }
 
 @end
