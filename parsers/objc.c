@@ -26,7 +26,6 @@
 #include "vstring.h"
 
 
-static objcKeyword parseMethodCall(lexingState * st, int _left_square);
 typedef enum {
 	K_INTERFACE,
 	K_IMPLEMENTATION,
@@ -156,6 +155,7 @@ static fieldDefinition ObjcFields [] = {
 };
 
 static langType Lang_ObjectiveC;
+static objcKeyword parseMethodCall(lexingState * st, int _left_square);
 
 /*//////////////////////////////////////////////////////////////////
 //// lexingInit             */
