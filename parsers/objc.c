@@ -324,31 +324,30 @@ static objcKeyword parseMethodCall(lexingState * st){
 			continue;
 		}
 		if (*st->cp == ']'){
-	//		printf("right square");
 			left_square--;
 			st->cp++;
-			buffer[bufferIndex] = ' ';
+			buffer[bufferIndex] = ']';
 			bufferIndex++;
 			continue;
 		}
 		bool moved = false;
+		int spaceCount = 0;
 		while (isAlpha(*st->cp) || isSpace(*st->cp)|| *st->cp==':'|| *st->cp == '_' || isNum(*st->cp)){
-			//printf("%c", *st->cp);
 			moved = true;
-			buffer[bufferIndex] = *st->cp;
-			bufferIndex++;
+			if (isSpace(*st->cp)) spaceCount++;
+			else 
+				spaceCount = 0;
+			if (spaceCount <= 1){
+				buffer[bufferIndex] = *st->cp;
+				bufferIndex++;
+			}
 			st->cp++;
 		}
-	//	printf("%d\n",st->cp);
 		if (!moved)
 			st->cp++;
-		
 	}
+	buffer[bufferIndex++] = '\n';
 	st->cp++;
-	// //st->cp = tmp;
-	// if (!isMethodCall)
-	// 	return Tok_SQUARER;
-	// st->cp++;
 	printf("Buffer result: %s\n", buffer);
 	return Tok_EOL;
 }
