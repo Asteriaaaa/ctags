@@ -155,8 +155,6 @@ static fieldDefinition ObjcFields [] = {
 };
 
 static langType Lang_ObjectiveC;
-static objcKeyword parseMethodCall(lexingState * st, int _left_square);
-
 /*//////////////////////////////////////////////////////////////////
 //// lexingInit             */
 typedef struct _lexingState {
@@ -195,6 +193,7 @@ static bool isSpace (char c)
 {
 	return c == ' ' || c == '\t';
 }
+static objcKeyword parseMethodCall(lexingState * st, int _left_square);
 
 /* return true if it end with an end of line */
 static void eatWhiteSpace (lexingState * st)
