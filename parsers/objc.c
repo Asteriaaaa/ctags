@@ -303,36 +303,54 @@ static int left_square = 0;
 static bool isMethodCall = false;
 static objcKeyword parseMethodCall(lexingState * st){
 	unsigned char * tmp = st->cp;
+	int offset;
 	while (*st->cp == ' ' ){ st->cp++;} //Strip spaces at the start of call
-	while (*st->cp != '\n' && *st->cp != '\0'){
+	while (left_square > 0){
+	//	printf(" %s ", st->cp);
+		//printf("left square num %d\n", left_square);
+		if (*st->cp == '\n' || *st->cp == '\0'){
+			//printf("if is line  change\n");
+			st->cp = readLineFromInputFile();
+			offset = st->cp;
+			//printf("read from ");
+			if (st == NULL)
+				return Tok_EOF;
+			continue;
+		}
 		if (*st->cp == '['){
+			//printf("left square\n");
 			left_square++;
 			st->cp++;
 			continue;
 		}
 		if (*st->cp == ']'){
+	//		printf("right square");
 			left_square--;
 			st->cp++;
-			if (left_square <= 0){
-				printf("The method call parse: %s\n", buffer);
-				isMethodCall = false;
-				return Tok_SQUARER;
-			}
 			buffer[bufferIndex] = ' ';
 			bufferIndex++;
 			continue;
 		}
+		bool moved = false;
 		while (isAlpha(*st->cp) || isSpace(*st->cp)|| *st->cp==':'|| *st->cp == '_' || isNum(*st->cp)){
+			//printf("%c", *st->cp);
+			moved = true;
 			buffer[bufferIndex] = *st->cp;
 			bufferIndex++;
 			st->cp++;
-			continue;
 		}
-		if (!(*st->cp != '\n' && *st->cp != '\0'))
-		st->cp++;
+	//	printf("%d\n",st->cp);
+		if (!moved)
+			st->cp++;
+		
 	}
-	st->cp = tmp;
-	return Tok_SQUAREL;
+	st->cp++;
+	// //st->cp = tmp;
+	// if (!isMethodCall)
+	// 	return Tok_SQUARER;
+	// st->cp++;
+	printf("Buffer result: %s\n", buffer);
+	return Tok_EOL;
 }
 
 /* The lexer is in charge of reading the file.
@@ -341,10 +359,10 @@ static objcKeyword parseMethodCall(lexingState * st){
 static objcKeyword lex (lexingState * st)
 {
 	int retType;
-	printf("lexing\n %s\n", st->cp);
-	if (isMethodCall){
-		return parseMethodCall(st);
-	}
+	//printf("lexing\n %s\n", st->cp);
+	// if (isMethodCall){
+	// 	return parseMethodCall(st);
+	// }
 	/* handling data input here */
 	while (st->cp == NULL || st->cp[0] == '\0')
 	{
@@ -571,14 +589,14 @@ static objcToken waitedToken, fallBackToken;
  * why though. */
 static void tillToken (vString * const ident CTAGS_ATTR_UNUSED, objcToken what)
 {
-	printf ("till token %d\n", what);
+//	printf ("till token %d\n", what);
 	if (what == waitedToken)
 		toDoNext = comeAfter;
 }
 
 static void tillTokenOrFallBack (vString * const ident CTAGS_ATTR_UNUSED, objcToken what)
 {
-	printf ("till token or fallback %d\n", what);
+	//printf ("till token or fallback %d\n", what);
 	if (what == waitedToken)
 		toDoNext = comeAfter;
 	else if (what == fallBackToken)
@@ -590,7 +608,7 @@ static void tillTokenOrFallBack (vString * const ident CTAGS_ATTR_UNUSED, objcTo
 static int ignoreBalanced_count = 0;
 static void ignoreBalanced (vString * const ident CTAGS_ATTR_UNUSED, objcToken what)
 {
-	printf ("ignoreBalanced %d\n", what);
+	///printf ("ignoreBalanced %d\n", what);
 	switch (what)
 	{
 	case Tok_PARL:
@@ -616,7 +634,7 @@ static void ignoreBalanced (vString * const ident CTAGS_ATTR_UNUSED, objcToken w
 
 static void parseFields (vString * const ident, objcToken what)
 {
-	printf("parsefields");
+	//printf("parsefields");
 	printf("%s ", what);
 	switch (what)
 	{
@@ -657,7 +675,7 @@ static vString *signature;
 
 static void tillTokenWithCapturingSignature (vString * const ident, objcToken what)
 {
-	printf("tillTokenWithCapturingSignature %d\n", what);
+	//printf("tillTokenWithCapturingSignature %d\n", what);
 	tillToken (ident, what);
 
 	if (what != waitedToken)
@@ -681,7 +699,7 @@ static void parseMethodsNameCommon (vString * const ident, objcToken what,
 									parseNext nextAction)
 {
 	unsigned int index;
-	printf(" parseMethodsNameCommon %d\n");
+	//printf(" parseMethodsNameCommon %d\n");
 	switch (what)
 	{
 	case Tok_PARL:
@@ -806,7 +824,7 @@ static void parseCategory (vString * const ident, objcToken what)
 
 static void parseImplemMethods (vString * const ident, objcToken what)
 {
-	printf("parseImplemMethods %d\n", what);
+	//printf("parseImplemMethods %d\n", what);
 	switch (what)
 	{
 	case Tok_PLUS:	/* + */
