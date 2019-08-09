@@ -10,7 +10,19 @@
     NSLog(@"");
     [[Interface sharedInstance] someMethods];
 
-    [[Interface23 shrare] isAbdc:T ob:M bcd:456];
+    [[Interface23 shrare] isAbdc:T 
+    ob:M 
+    bcd:456];
+
+        int64_t result = [_mRABizNetWorkLogic  requestWithCmd:CmdCheckIsFriend
+                                           requestModel:req
+                                           decodeClass:[RACheckIsFriendRsp class]
+                                           successBlock:^(id requsetModel, id receiveModel) {
+
+                                         }
+                                           errorBlock:^(id requestModel, RANetworkError *errorInfo) {
+
+                                           }];
 }
 
 @end
