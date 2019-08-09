@@ -304,7 +304,11 @@ static bool isMethodCall = false;
 static objcKeyword parseMethodCall(lexingState * st){
 	unsigned char * tmp = st->cp;
 	while (*st->cp == ' ' ){ st->cp++;} //Strip spaces at the start of call
-	while (*st->cp != '\n' && *st->cp != '\0'){
+	while (left_square > 0){
+		if (*st->cp != '\n' && *st->cp != '\0'){
+			st = readLineFromInputFile();
+			continue;
+		}
 		if (*st->cp == '['){
 			left_square++;
 			st->cp++;
@@ -313,11 +317,6 @@ static objcKeyword parseMethodCall(lexingState * st){
 		if (*st->cp == ']'){
 			left_square--;
 			st->cp++;
-			if (left_square <= 0){
-				printf("The method call parse: %s\n", buffer);
-				isMethodCall = false;
-				return Tok_SQUARER;
-			}
 			buffer[bufferIndex] = ' ';
 			bufferIndex++;
 			continue;
@@ -328,11 +327,13 @@ static objcKeyword parseMethodCall(lexingState * st){
 			st->cp++;
 			continue;
 		}
-		if (!(*st->cp != '\n' && *st->cp != '\0'))
 		st->cp++;
 	}
-	st->cp = tmp;
-	return Tok_SQUAREL;
+	// //st->cp = tmp;
+	// if (!isMethodCall)
+	// 	return Tok_SQUARER;
+	// st->cp++;
+	return Tok_EOL;
 }
 
 /* The lexer is in charge of reading the file.
@@ -342,9 +343,9 @@ static objcKeyword lex (lexingState * st)
 {
 	int retType;
 	printf("lexing\n %s\n", st->cp);
-	if (isMethodCall){
-		return parseMethodCall(st);
-	}
+	// if (isMethodCall){
+	// 	return parseMethodCall(st);
+	// }
 	/* handling data input here */
 	while (st->cp == NULL || st->cp[0] == '\0')
 	{
