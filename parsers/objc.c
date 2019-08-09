@@ -306,7 +306,9 @@ static objcKeyword parseMethodCall(lexingState * st){
 	while (*st->cp == ' ' ){ st->cp++;} //Strip spaces at the start of call
 	while (left_square > 0){
 		if (*st->cp != '\n' && *st->cp != '\0'){
-			st = readLineFromInputFile();
+			st->cp = readLineFromInputFile();
+			if (st->cp == NULL);
+				return Tok_EOF;
 			continue;
 		}
 		if (*st->cp == '['){
@@ -321,12 +323,16 @@ static objcKeyword parseMethodCall(lexingState * st){
 			bufferIndex++;
 			continue;
 		}
+		bool moved = false;
 		while (isAlpha(*st->cp) || isSpace(*st->cp)|| *st->cp==':'|| *st->cp == '_' || isNum(*st->cp)){
 			buffer[bufferIndex] = *st->cp;
 			bufferIndex++;
 			st->cp++;
+			moved = true;
 			continue;
 		}
+		if (!moved)
+			st->cp++;
 		st->cp++;
 	}
 	// //st->cp = tmp;
@@ -433,15 +439,12 @@ static objcKeyword lex (lexingState * st)
 			return Tok_CurlR;
 		case '[':
 			st->cp++;
-			isMethodCall = true;
 			left_square++;
 			return parseMethodCall(st);
 			//return Tok_SQUAREL;
 		case ']':
 			st->cp++;
-			left_square--;
-			if (left_square <= 0)
-				isMethodCall = false;
+			left_square--; //Dead code
 			return Tok_SQUARER;
 		case ',':
 			st->cp++;
