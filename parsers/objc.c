@@ -304,7 +304,8 @@ static void parseBlock(lexingState *st){
 		if (*st->cp == '\0' || *st->cp == '\n'){
 			st->cp = readLineFromInputFile();
 		}
-		if (*st->cp != '[') {st->cp++ 
+		if (*st->cp != '[') {
+			st->cp++;
 			parseMethodCall(st, 1);
 		}
 
