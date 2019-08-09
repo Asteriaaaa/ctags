@@ -333,12 +333,9 @@ static objcKeyword parseMethodCall(lexingState * st){
 		}
 		if (!moved)
 			st->cp++;
-		st->cp++;
 	}
-	// //st->cp = tmp;
-	// if (!isMethodCall)
-	// 	return Tok_SQUARER;
-	// st->cp++;
+	st->cp++;
+	printf("Buffer result: %s\n", buffer);
 	return Tok_EOL;
 }
 
@@ -348,10 +345,7 @@ static objcKeyword parseMethodCall(lexingState * st){
 static objcKeyword lex (lexingState * st)
 {
 	int retType;
-	printf("lexing\n %s\n", st->cp);
-	// if (isMethodCall){
-	// 	return parseMethodCall(st);
-	// }
+	//printf("lexing\n %s\n", st->cp);
 	/* handling data input here */
 	while (st->cp == NULL || st->cp[0] == '\0')
 	{
