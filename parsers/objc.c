@@ -25,6 +25,8 @@
 #include "trashbox.h"
 #include "vstring.h"
 
+
+static objcKeyword parseMethodCall(lexingState * st, int _left_square);
 typedef enum {
 	K_INTERFACE,
 	K_IMPLEMENTATION,
@@ -297,37 +299,51 @@ static void readIdentifierObjcDirective (lexingState * st)
 
 	st->cp = p;
 }
+
+static void parseBlock(lexingState *st){
+	while (*st->cp != '}'){
+		if (*st->cp == '\0' || *st->cp == '\n'){
+			st->cp = readLineFromInputFile();
+		}
+		if (*st->cp != '[') {st->cp++ 
+			parseMethodCall(st, 1);
+		}
+
+	}
+
+}
+
 static char buffer[1024];
 static int bufferIndex = 0;
 static int left_square = 0;
 static bool isMethodCall = false;
-static objcKeyword parseMethodCall(lexingState * st){
+static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 	unsigned char * tmp = st->cp;
 	int offset;
 	while (*st->cp == ' ' ){ st->cp++;} //Strip spaces at the start of call
-	while (left_square > 0){
-	//	printf(" %s ", st->cp);
-		//printf("left square num %d\n", left_square);
+	while (_left_square > 0){
 		if (*st->cp == '\n' || *st->cp == '\0'){
-			//printf("if is line  change\n");
 			st->cp = readLineFromInputFile();
 			offset = st->cp;
-			//printf("read from ");
 			if (st == NULL)
 				return Tok_EOF;
 			continue;
 		}
 		if (*st->cp == '['){
 			//printf("left square\n");
-			left_square++;
+			_left_square++;
 			st->cp++;
 			continue;
 		}
 		if (*st->cp == ']'){
-			left_square--;
+			_left_square--;
 			st->cp++;
 			buffer[bufferIndex] = ']';
 			bufferIndex++;
+			continue;
+		}
+		if (*st->cp == '^'){
+			parseBlock(st);
 			continue;
 		}
 		bool moved = false;
@@ -451,7 +467,7 @@ static objcKeyword lex (lexingState * st)
 			st->cp++;
 			isMethodCall = true;
 			left_square++;
-			return parseMethodCall(st);
+			return parseMethodCall(st, left_square);
 			//return Tok_SQUAREL;
 		case ']':
 			st->cp++;
