@@ -18,7 +18,20 @@
                                            requestModel:req
                                            decodeClass:[RACheckIsFriendRsp class]
                                            successBlock:^(id requsetModel, id receiveModel) {
+                                                [obj method];
+                                         }
+                                           errorBlock:^(id requestModel, RANetworkError *errorInfo) {
+                                                [obj2 method222];
+                                           }];
 
+
+                                           int64_t result = [_mRABizNetWorkLogic  requestWithCmd:CmdCheckIsFriend
+                                           requestModel:req
+                                           decodeClass:[RACheckIsFriendRsp class:[inside method:med 
+                                           and:me]]
+                                           successBlock:^(id requsetModel, id receiveModel) {
+                                              [obj3 method:2
+                                              and:2 and2:3];
                                          }
                                            errorBlock:^(id requestModel, RANetworkError *errorInfo) {
 
