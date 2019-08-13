@@ -299,24 +299,27 @@ static void readIdentifierObjcDirective (lexingState * st)
 	st->cp = p;
 }
 
+static char buffer[1024];
+static int bufferIndex = 0;
+static int left_square = 0;
 static void parseBlock(lexingState *st){
+	int pos = 0;
 	while (*st->cp != '}'){
 		if (*st->cp == '\0' || *st->cp == '\n'){
 			st->cp = readLineFromInputFile();
 		}
-		if (*st->cp != '[') {
+		if (*st->cp == '[') {
+			pos = bufferIndex;
 			st->cp++;
 			parseMethodCall(st, 1);
+			int now = bufferIndex;
+			continue;
 		}
-
+		st->cp++;
 	}
-
+	buffer[bufferIndex++] = '\n';//这里不对，想一想没什么好的方式，只能先parse完一个打印一个
 }
 
-static char buffer[1024];
-static int bufferIndex = 0;
-static int left_square = 0;
-static bool isMethodCall = false;
 static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 	unsigned char * tmp = st->cp;
 	int offset;
@@ -364,6 +367,7 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 	}
 	buffer[bufferIndex++] = '\n';
 	st->cp++;
+	left_square = 0;
 	printf("Buffer result: %s\n", buffer);
 	return Tok_EOL;
 }
@@ -465,15 +469,12 @@ static objcKeyword lex (lexingState * st)
 			return Tok_CurlR;
 		case '[':
 			st->cp++;
-			isMethodCall = true;
 			left_square++;
 			return parseMethodCall(st, left_square);
 			//return Tok_SQUAREL;
 		case ']':
 			st->cp++;
 			left_square--;
-			if (left_square <= 0)
-				isMethodCall = false;
 			return Tok_SQUARER;
 		case ',':
 			st->cp++;
