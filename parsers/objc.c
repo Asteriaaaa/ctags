@@ -323,6 +323,10 @@ static void parseBlock(lexingState *st){
 static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 	unsigned char * tmp = st->cp;
 	int offset;
+	char localBuffer[1024];
+	localBuffer[0] = '[';
+	int localIndex = 1;
+	bool paramFlag = false;
 	while (*st->cp == ' ' ){ st->cp++;} //Strip spaces at the start of call
 	while (_left_square > 0){
 		if (*st->cp == '\n' || *st->cp == '\0'){
@@ -334,15 +338,23 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 		}
 		if (*st->cp == '['){
 			//printf("left square\n");
-			_left_square++;
-			st->cp++;
+			if (paramFlag){
+				st->cp++;
+				parseMethodCall(st, 1);
+				st->cp--; //默认parseMethodCall方法最后会++以跳过分号，但参数内没有，所以减回来
+			}
+			else{
+				localBuffer[localIndex++] = '[';
+				_left_square++;
+				st->cp++;
+			}
 			continue;
 		}
 		if (*st->cp == ']'){
 			_left_square--;
 			st->cp++;
-			buffer[bufferIndex] = ']';
-			bufferIndex++;
+			buffer[bufferIndex++] = ']';
+			localBuffer[localIndex++] = ']';
 			continue;
 		}
 		if (*st->cp == '^'){
@@ -357,18 +369,24 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 			else 
 				spaceCount = 0;
 			if (spaceCount <= 1){
-				buffer[bufferIndex] = *st->cp;
-				bufferIndex++;
+				buffer[bufferIndex++] = *st->cp;
+				localBuffer[localIndex++] = *st->cp;
 			}
+			if (*st->cp == ':')
+				paramFlag = true;
+			else
+				paramFlag = false;
 			st->cp++;
 		}
 		if (!moved)
 			st->cp++;
 	}
 	buffer[bufferIndex++] = '\n';
+	localBuffer[localIndex++] = '\0';
 	st->cp++;
 	left_square = 0;
-	printf("Buffer result: %s\n", buffer);
+	printf("Local buffer result : %s\n", localBuffer);
+	//printf("Buffer result: %s\n", buffer);
 	return Tok_EOL;
 }
 
