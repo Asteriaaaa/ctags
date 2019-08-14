@@ -302,6 +302,9 @@ static void readIdentifierObjcDirective (lexingState * st)
 static char buffer[1024];
 static int bufferIndex = 0;
 static int left_square = 0;
+static void parseBlock(lexingState *st);
+static objcKeyword parseMethodCall(lexingState * st, int _left_square);
+static void recordInvokedMethod(char *invocation);
 static void parseBlock(lexingState *st){
 	int pos = 0;
 	while (*st->cp != '}'){
@@ -324,8 +327,8 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 	unsigned char * tmp = st->cp;
 	int offset;
 	char localBuffer[1024];
-	localBuffer[0] = '[';
-	int localIndex = 1;
+	//localBuffer[0] = '[';
+	int localIndex = 0;
 	bool paramFlag = false;
 	while (*st->cp == ' ' ){ st->cp++;} //Strip spaces at the start of call
 	while (_left_square > 0){
@@ -344,7 +347,7 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 				st->cp--; //默认parseMethodCall方法最后会++以跳过分号，但参数内没有，所以减回来
 			}
 			else{
-				localBuffer[localIndex++] = '[';
+				//localBuffer[localIndex++] = '[';
 				_left_square++;
 				st->cp++;
 			}
@@ -353,7 +356,6 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 		if (*st->cp == ']'){
 			_left_square--;
 			st->cp++;
-			buffer[bufferIndex++] = ']';
 			localBuffer[localIndex++] = ']';
 			continue;
 		}
@@ -369,7 +371,6 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 			else 
 				spaceCount = 0;
 			if (spaceCount <= 1){
-				buffer[bufferIndex++] = *st->cp;
 				localBuffer[localIndex++] = *st->cp;
 			}
 			if (*st->cp == ':')
@@ -381,13 +382,46 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 		if (!moved)
 			st->cp++;
 	}
-	buffer[bufferIndex++] = '\n';
 	localBuffer[localIndex++] = '\0';
 	st->cp++;
 	left_square = 0;
-	printf("Local buffer result : %s\n", localBuffer);
-	//printf("Buffer result: %s\n", buffer);
+	//printf("Local buffer result : %s\n", localBuffer);
+	localBuffer[--localIndex] = ';';
+	localBuffer[++localIndex] = '\0';
+	recordInvokedMethod(localBuffer);
 	return Tok_EOL;
+}
+
+static void recordInvokedMethod (char *invocation){
+	if (!invocation)
+		return;
+	char localBuffer[1024];
+	int localIndex = 0;
+	while (*invocation && *invocation != ' ') invocation++;
+	while (*invocation && *invocation == ' ') invocation++;
+	while (*invocation != ';'){
+		while (1){
+			//printf(" %s", localBuffer);
+			if(*invocation == ':'){
+				localBuffer[localIndex++] = ':';
+				while (*invocation != ']' && *invocation != ' ') {
+					invocation++;
+				}
+			}else{
+			localBuffer[localIndex++] = *invocation;
+			invocation++;
+			}
+			//printf("invocation: %s\n", invocation);
+			if (*invocation == ']') break;
+		}
+
+		localBuffer[localIndex] = '\0';
+		char *pointer = &localBuffer[0];
+		while (*pointer == ' ') pointer++; 
+		printf("%s\n", pointer);
+		localIndex = 0;
+		invocation++;
+	}
 }
 
 /* The lexer is in charge of reading the file.

@@ -3,6 +3,7 @@
 - (void) method1:(int)a:
                 para2 :(int)b{
 [obj med];
+[[[[obj1  m] m1] m2] m3];
                     return;
                 }
 
