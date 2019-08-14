@@ -1004,7 +1004,6 @@ static void parseInterfaceProtocolList (vString * const ident, objcToken what)
 
 static void parseMethods (vString * const ident CTAGS_ATTR_UNUSED, objcToken what)
 {
-	printf("parseMethods %d", what);
 	switch (what)
 	{
 	case Tok_PLUS:	/* + */
@@ -1347,7 +1346,6 @@ static void parseCPlusPlusCLinkage (vString * const ident, objcToken what)
  * happen here */
 static void globalScope (vString * const ident, objcToken what)
 {
-	printf("globalScope %d\n", what);
 	switch (what)
 	{
 	case Tok_Sharp:
