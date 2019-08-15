@@ -308,10 +308,14 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square);
 static void recordInvokedMethod(char *invocation);
 static void parseBlock(lexingState *st){
 	int pos = 0;
-	while (*st->cp != '}'){
+	while (*st->cp != '{') st->cp++;
+	st->cp++;
+	int left = 1;
+	while (left>0){
 		if (*st->cp == '\0' || *st->cp == '\n'){
 			st->cp = readLineFromInputFile();
 			lineNumber++;
+			continue;
 		}
 		if (*st->cp == '[') {
 			pos = bufferIndex;
@@ -320,6 +324,10 @@ static void parseBlock(lexingState *st){
 			int now = bufferIndex;
 			continue;
 		}
+		if (*st->cp == '{')
+			left++;
+		if (*st->cp == '}')
+			left--;
 		st->cp++;
 	}
 	buffer[bufferIndex++] = '\n';//这里不对，想一想没什么好的方式，只能先parse完一个打印一个
@@ -332,8 +340,13 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 	//localBuffer[0] = '[';
 	int localIndex = 0;
 	bool paramFlag = false;
+	bool nsFlag = false;
 	while (*st->cp == ' ' ){ st->cp++;} //Strip spaces at the start of call
 	while (_left_square > 0){
+		if (*st->cp == '@' && *(st->cp+1) == '['){
+			nsFlag = true;
+		}
+
 		if (*st->cp == '\n' || *st->cp == '\0'){
 			st->cp = readLineFromInputFile();
 			lineNumber++;
@@ -343,7 +356,12 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 			continue;
 		}
 		if (*st->cp == '['){
-			//printf("left square\n");
+			if (nsFlag){
+				st->cp++;
+				_left_square++;
+				nsFlag = false;
+				continue;
+			}
 			if (paramFlag){
 				st->cp++;
 				parseMethodCall(st, 1);
@@ -374,6 +392,7 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 			else 
 				spaceCount = 0;
 			if (spaceCount <= 1){
+				
 				localBuffer[localIndex++] = *st->cp;
 			}
 			if (*st->cp == ':')
@@ -525,7 +544,7 @@ static objcKeyword lex (lexingState * st)
 		case '[':
 			st->cp++;
 			left_square++;
-			if (runCount == 1)
+			if (runCount == 0)
 				return parseMethodCall(st, left_square);
 			else
 				return Tok_SQUAREL;
