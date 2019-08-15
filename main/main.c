@@ -542,15 +542,14 @@ static void sanitizeEnviron (void)
 /*
  *		Start up code
  */
-
+int runCount = 0;
 extern int ctags_cli_main (int argc CTAGS_ATTR_UNUSED, char **argv)
 {
 	cookedArgs *args;
-
+	cookedArgs *argsbak;
 	initDefaultTrashBox ();
-
+	//Copy 一下args和argv可能就行了
 	DEBUG_INIT();
-
 	setErrorPrinter (stderrDefaultErrorPrinter, NULL);
 	setMainLoop (batchMakeTags, NULL);
 	setTagWriter (WRITER_U_CTAGS, NULL);
@@ -563,6 +562,8 @@ extern int ctags_cli_main (int argc CTAGS_ATTR_UNUSED, char **argv)
 	initXtagObjects ();
 
 	args = cArgNewFromArgv (argv);
+	argsbak = cArgNewFromArgv (argv);
+	previewFirstOption (argsbak);
 	previewFirstOption (args);
 	testEtagsInvocation ();
 	initializeParsing ();
@@ -571,12 +572,16 @@ extern int ctags_cli_main (int argc CTAGS_ATTR_UNUSED, char **argv)
 	verbose ("Reading initial options from command line\n");
 	parseCmdlineOptions (args);
 	checkOptions ();
-
 	runMainLoop (args);
-
+	runCount++;
+	printf("First run over\n");
+	cookedArgs *a;
+	runMainLoop (argsbak);
 	/*  Clean up.
 	 */
 	cArgDelete (args);
+	
+	cArgDelete (argsbak);
 	freeKeywordTable ();
 	freeRoutineResources ();
 	freeInputFileResources ();

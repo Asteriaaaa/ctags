@@ -25,7 +25,7 @@
 #include "trashbox.h"
 #include "vstring.h"
 
-
+static int lineNumber = 0;
 typedef enum {
 	K_INTERFACE,
 	K_IMPLEMENTATION,
@@ -246,6 +246,7 @@ static void eatComment (lexingState * st)
 		if (c == NULL || *c == '\0')
 		{
 			st->cp = readLineFromInputFile ();
+			lineNumber++;
 			/* WOOPS... no more input...
 			 * we return, next lexing read
 			 * will be null and ok */
@@ -310,6 +311,7 @@ static void parseBlock(lexingState *st){
 	while (*st->cp != '}'){
 		if (*st->cp == '\0' || *st->cp == '\n'){
 			st->cp = readLineFromInputFile();
+			lineNumber++;
 		}
 		if (*st->cp == '[') {
 			pos = bufferIndex;
@@ -334,6 +336,7 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 	while (_left_square > 0){
 		if (*st->cp == '\n' || *st->cp == '\0'){
 			st->cp = readLineFromInputFile();
+			lineNumber++;
 			offset = st->cp;
 			if (st == NULL)
 				return Tok_EOF;
@@ -418,7 +421,7 @@ static void recordInvokedMethod (char *invocation){
 		localBuffer[localIndex] = '\0';
 		char *pointer = &localBuffer[0];
 		while (*pointer == ' ') pointer++; 
-		printf("%s\n", pointer);
+		printf("%s|%d\n", pointer, lineNumber);
 		localIndex = 0;
 		invocation++;
 	}
@@ -430,7 +433,6 @@ static void recordInvokedMethod (char *invocation){
 static objcKeyword lex (lexingState * st)
 {
 	int retType;
-	//printf("lexing\n %s\n", st->cp);
 	// if (isMethodCall){
 	// 	return parseMethodCall(st);
 	// }
@@ -438,6 +440,7 @@ static objcKeyword lex (lexingState * st)
 	while (st->cp == NULL || st->cp[0] == '\0')
 	{
 		st->cp = readLineFromInputFile ();
+		lineNumber++;
 		if (st->cp == NULL)
 			return Tok_EOF;
 
@@ -522,8 +525,10 @@ static objcKeyword lex (lexingState * st)
 		case '[':
 			st->cp++;
 			left_square++;
-			return parseMethodCall(st, left_square);
-			//return Tok_SQUAREL;
+			if (runCount == 1)
+				return parseMethodCall(st, left_square);
+			else
+				return Tok_SQUAREL;
 		case ']':
 			st->cp++;
 			left_square--;
@@ -767,9 +772,8 @@ static void parseMethodsNameCommon (vString * const ident, objcToken what,
 									parseNext nextAction)
 {
 	unsigned int index;
-	//printf(" parseMethodsNameCommon %d\n");
 	switch (what)
-	{
+	{	
 	case Tok_PARL:
 		toDoNext = &tillToken;
 		comeAfter = reEnter;
@@ -1440,6 +1444,7 @@ static void findObjcTags (void)
 
 	st.name = vStringNew ();
 	st.cp = readLineFromInputFile ();
+	lineNumber++;
 	toDoNext = &globalScope;
 	tok = lex (&st);
 	while (tok != Tok_EOF)

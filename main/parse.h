@@ -25,7 +25,7 @@
 */
 #define LANG_AUTO   (-1)
 #define LANG_IGNORE (-2)
-
+extern int runCount;
 /*
 *   DATA DECLARATIONS
 */
