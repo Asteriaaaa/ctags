@@ -303,12 +303,31 @@ static void readIdentifierObjcDirective (lexingState * st)
 static char buffer[1024];
 static int bufferIndex = 0;
 static int left_square = 0;
+static bool isMethodCall(char * str);
 static void parseBlock(lexingState *st);
 static objcKeyword parseMethodCall(lexingState * st, int _left_square);
 static void recordInvokedMethod(char *invocation);
+static bool isMethodCall(char * str){
+	char *tmp = str;
+	while (*str != '\0' && *str != ']'){
+		if (*str == '@')
+			return false;
+		str++;
+	}
+	str = tmp;
+	return true;
+}
+
 static void parseBlock(lexingState *st){
 	int pos = 0;
-	while (*st->cp != '{') st->cp++;
+	while (*st->cp != '{'){ 
+		if (*st->cp == '\0' || *st->cp == '\n'){
+			st->cp = readLineFromInputFile();
+			lineNumber++;
+			continue;
+		}
+		st->cp++;		
+	}
 	st->cp++;
 	int left = 1;
 	while (left>0){
@@ -320,7 +339,8 @@ static void parseBlock(lexingState *st){
 		if (*st->cp == '[') {
 			pos = bufferIndex;
 			st->cp++;
-			parseMethodCall(st, 1);
+			if (isMethodCall(st->cp))
+				parseMethodCall(st, 1);
 			int now = bufferIndex;
 			continue;
 		}
@@ -330,7 +350,6 @@ static void parseBlock(lexingState *st){
 			left--;
 		st->cp++;
 	}
-	buffer[bufferIndex++] = '\n';//这里不对，想一想没什么好的方式，只能先parse完一个打印一个
 }
 
 static objcKeyword parseMethodCall(lexingState * st, int _left_square){
@@ -343,8 +362,10 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 	bool nsFlag = false;
 	while (*st->cp == ' ' ){ st->cp++;} //Strip spaces at the start of call
 	while (_left_square > 0){
-		if (*st->cp == '@' && *(st->cp+1) == '['){
+		//处理太过麻烦，不处理
+		if ((*st->cp == '@' && *(st->cp+1) == '[') ||(  *st->cp == '@' && *(st->cp+1) == '\"')||(  *st->cp == '@' && *(st->cp+1) == '{')){
 			nsFlag = true;
+			return Tok_EOF;
 		}
 
 		if (*st->cp == '\n' || *st->cp == '\0'){
@@ -356,8 +377,14 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 			continue;
 		}
 		if (*st->cp == '['){
+			if (*(st->cp+1)=='@'){
+				while (*st->cp != ']') st->cp++;
+				st->cp++;
+				continue;
+			}
 			if (nsFlag){
 				st->cp++;
+				while (*st->cp != ']') st->cp++;
 				_left_square++;
 				nsFlag = false;
 				continue;
@@ -386,8 +413,11 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 		}
 		bool moved = false;
 		int spaceCount = 0;
-		while (isAlpha(*st->cp) || isSpace(*st->cp)|| *st->cp==':'|| *st->cp == '_' || isNum(*st->cp)){
+		while (isAlpha(*st->cp) || isSpace(*st->cp)|| *st->cp==':'|| 
+		*st->cp == '_' || isNum(*st->cp)|| *st->cp == ','||
+		*st->cp =='(' || *st->cp == ')'){
 			moved = true;
+			
 			if (isSpace(*st->cp)) spaceCount++;
 			else 
 				spaceCount = 0;
@@ -407,21 +437,41 @@ static objcKeyword parseMethodCall(lexingState * st, int _left_square){
 	localBuffer[localIndex++] = '\0';
 	st->cp++;
 	left_square = 0;
-	//printf("Local buffer result : %s\n", localBuffer);
 	localBuffer[--localIndex] = ';';
 	localBuffer[++localIndex] = '\0';
 	recordInvokedMethod(localBuffer);
 	return Tok_EOL;
 }
 
-static void recordInvokedMethod (char *invocation){
+static void recordInvokedMethod (char *invocation){ 
+	if (strlen(invocation) <= 3)return;
+	char * tmp = invocation;
+	bool valid = false;
+	while (*tmp != ';'){
+		if (isAlpha(*tmp)){
+			valid =true;
+			break;
+		}
+		tmp++;
+	}
+	tmp = invocation;
+	bool valid_2 = false;
+	while (*tmp != ';'){
+		if (isSpace(*tmp)){
+			valid_2 = true;
+			break;
+		}
+		tmp++;
+	}
+	if (!(valid && valid_2)) return;
 	if (!invocation)
 		return;
 	char localBuffer[1024];
 	int localIndex = 0;
+	//printf("%s\n", invocation);
 	while (*invocation && *invocation != ' ') invocation++;
 	while (*invocation && *invocation == ' ') invocation++;
-	while (*invocation != ';'){
+	while (*invocation != '\0' &&*invocation!='\n' && *invocation != ';'){
 		while (1){
 			//printf(" %s", localBuffer);
 			if(*invocation == ':'){
@@ -436,7 +486,6 @@ static void recordInvokedMethod (char *invocation){
 			//printf("invocation: %s\n", invocation);
 			if (*invocation == ']') break;
 		}
-
 		localBuffer[localIndex] = '\0';
 		char *pointer = &localBuffer[0];
 		while (*pointer == ' ') pointer++; 
@@ -446,11 +495,14 @@ static void recordInvokedMethod (char *invocation){
 	}
 }
 
+
+
 /* The lexer is in charge of reading the file.
  * Some of sub-lexer (like eatComment) also read file.
  * lexing is finished when the lexer return Tok_EOF */
 static objcKeyword lex (lexingState * st)
 {
+	
 	int retType;
 	// if (isMethodCall){
 	// 	return parseMethodCall(st);
@@ -465,7 +517,6 @@ static objcKeyword lex (lexingState * st)
 
 		return Tok_EOL;
 	}
-
 	if (isAlpha (*st->cp) || (*st->cp == '_'))
 	{
 		readIdentifier (st);
@@ -544,13 +595,13 @@ static objcKeyword lex (lexingState * st)
 		case '[':
 			st->cp++;
 			left_square++;
-			if (runCount == 0)
+			// if (runCount == 1 )
 				return parseMethodCall(st, left_square);
-			else
-				return Tok_SQUAREL;
+			// else
+			// 	return Tok_SQUAREL;
 		case ']':
 			st->cp++;
-			left_square--;
+			//left_square--;
 			return Tok_SQUARER;
 		case ',':
 			st->cp++;
@@ -727,7 +778,6 @@ static void ignoreBalanced (vString * const ident CTAGS_ATTR_UNUSED, objcToken w
 static void parseFields (vString * const ident, objcToken what)
 {
 	//printf("parsefields");
-	printf("%s ", what);
 	switch (what)
 	{
 	case Tok_CurlR:
@@ -755,7 +805,6 @@ static void parseFields (vString * const ident, objcToken what)
 		/* NOTHING */
 		break;
 	}
-	printf("parsefields over\n\n");
 }
 
 static objcKind methodKind;

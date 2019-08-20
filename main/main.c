@@ -574,9 +574,9 @@ extern int ctags_cli_main (int argc CTAGS_ATTR_UNUSED, char **argv)
 	checkOptions ();
 	runMainLoop (args);
 	runCount++;
-	printf("First run over\n");
+	//printf("First run over\n");
 	cookedArgs *a;
-	runMainLoop (argsbak);
+	//runMainLoop (argsbak);
 	/*  Clean up.
 	 */
 	cArgDelete (args);
